@@ -1,14 +1,20 @@
 import json, math, time, io
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone, timedelta
 
 import pandas as pd
 import requests
 from skyfield.api import Loader, wgs84, EarthSatellite
 from skyfield.api import utc
 from skyfield.timelib import Time
-from dash import Dash, html, dcc
-import plotly.graph_objects as go
+from dash import Dash, html, dcc, Input, Output
 
+import plotly.graph_objects as go
+print("dash imported from:", getattr(Dash, "__file__", "<no __file__>")) 
+print("python path[0]:", sys.path[0])
+print("Dash class:", hasattr(dash, "Dash"))
+
+# Initialize Dash
+app = Dash(__name__)
 # ---------------- Config ----------------
 CFG_PATH = "config.json"
 DEFAULT_CFG = "config.example.json"
@@ -127,7 +133,7 @@ TLE_BLOCKS = fetch_tles()
 SAT_OBJECTS = sats_from_tle(TLE_BLOCKS)
 
 def world_figure():
-    now = datetime.utcnow().replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
     t = ts.from_datetime(now)
     df = subpoint_df(SAT_OBJECTS, t)
 
@@ -178,8 +184,8 @@ app.layout = html.Div([
 ])
 
 @app.callback(
-    dcc.Output("globe", "figure"),
-    dcc.Input("tick", "n_intervals")
+    Output("globe", "figure"),
+    Input("tick", "n_intervals")
 )
 def refresh_globe(_):
     return world_figure()
@@ -192,7 +198,6 @@ def refresh_passes(_):
     df = passes_table()
     if df.empty:
         return html.Div("No passes above threshold in next 24h.")
-    # Render a simple HTML table
     header = html.Tr([html.Th(c) for c in df.columns])
     body = [html.Tr([html.Td(df.iloc[i, j]) for j in range(len(df.columns))]) for i in range(min(len(df), 200))]
     return html.Table([header] + body, style={"fontFamily":"monospace", "fontSize":"12px"})
