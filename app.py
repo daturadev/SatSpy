@@ -1,6 +1,7 @@
 import json, math, time, io
 from datetime import datetime, timezone, timedelta
 
+import sys
 import pandas as pd
 import requests
 from skyfield.api import Loader, wgs84, EarthSatellite
@@ -9,12 +10,12 @@ from skyfield.timelib import Time
 from dash import Dash, html, dcc, Input, Output
 
 import plotly.graph_objects as go
-print("dash imported from:", getattr(Dash, "__file__", "<no __file__>")) 
-print("python path[0]:", sys.path[0])
-print("Dash class:", hasattr(dash, "Dash"))
-
+import dash
 # Initialize Dash
 app = Dash(__name__)
+print("dash __path__ ->", getattr(dash, "__path_", None))
+
+
 # ---------------- Config ----------------
 CFG_PATH = "config.json"
 DEFAULT_CFG = "config.example.json"
@@ -171,7 +172,6 @@ def passes_table(max_per_sat=2):
     return df
 
 # ---------------- Dash app ----------------
-app = Dash(__name__)
 app.title = "SatViz v0.1"
 
 app.layout = html.Div([
@@ -191,8 +191,8 @@ def refresh_globe(_):
     return world_figure()
 
 @app.callback(
-    dcc.Output("passes", "children"),
-    dcc.Input("tick", "n_intervals")
+    Output("passes", "children"),
+    Input("tick", "n_intervals")
 )
 def refresh_passes(_):
     df = passes_table()
@@ -203,4 +203,7 @@ def refresh_passes(_):
     return html.Table([header] + body, style={"fontFamily":"monospace", "fontSize":"12px"})
     
 if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", port=8050, debug=False)
+    app.run(debug=True,
+    host="127.0.0.1",
+    port=8050,
+    use_reloader=False)
